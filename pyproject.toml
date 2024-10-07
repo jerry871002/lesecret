@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lesecret"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
     { name="Jerry Yang", email="jerry871002@gmail.com" }
 ]
@@ -18,12 +18,16 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent"
+    "Operating System :: OS Independent",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Utilities",
+    "Environment :: Console"
 ]
 dependencies = [
     "cryptography==43.0.1",
     "numpy==2.1.1",
-    "pillow==10.4.0"
+    "pillow==10.4.0",
+    "rich==13.9.2"
 ]
 
 [project.scripts]
