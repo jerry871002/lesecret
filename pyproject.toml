@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lesecret"
+version = "0.0.1"
+authors = [
+    { name="Jerry Yang", email="jerry871002@gmail.com" }
+]
+description = "An image steganography tool to hide secrets in plain sight"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "cryptography==43.0.1",
+    "numpy==2.1.1",
+    "pillow==10.4.0"
+]
+
+[project.scripts]
+lesecret = "lesecret.main:main"
+
+[project.urls]
+Homepage = "https://github.com/jerry871002/lesecret"
+Issues = "https://github.com/jerry871002/lesecret/issues"
