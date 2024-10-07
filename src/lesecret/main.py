@@ -12,6 +12,8 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.text import Text
 
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+
 END_OF_TEXT = '1111111111111110'
 ENCODING = 'utf-8'
 
@@ -55,7 +57,7 @@ def encode_text_in_image(image_path: str, text: str, output_path: str) -> None:
     data_flat = image_data.flatten()
 
     for i, bit in enumerate(binary_message):
-        data_flat[i] = (data_flat[i] & ~1) | int(bit)
+        data_flat[i] = np.uint8((data_flat[i] & 0b11111110) | int(bit))
 
     image_data = data_flat.reshape(image_data.shape)
     encoded_image = Image.fromarray(image_data)
@@ -98,7 +100,8 @@ def encode_mode(console: Console) -> None:
     try:
         encode_text_in_image(image_path, encrypted_text.decode(ENCODING), output_path)
     except Exception as e:
-        console.print(f'❌ [bold red]Error: {str(e)}[/bold red]')
+        logging.debug(traceback.format_exc())
+        console.print(f'❌ [bold red]Error: {e}[/bold red]')
 
     console.print(
         f'✅ [bold green]Text successfully encoded into the image and saved at {output_path}[/bold green]'
@@ -109,7 +112,6 @@ def decode_mode(console: Console) -> None:
     image_path = Prompt.ask('[cyan]Enter the path to the image with hidden text[/cyan]')
     passkey = Prompt.ask('[cyan]Enter the passkey to decrypt the text[/cyan]', password=True)
 
-    # Decode the text from the image
     try:
         encrypted_message = decode_text_from_image(image_path)
         decrypted_message = decrypt_message(encrypted_message.encode(ENCODING), passkey)
@@ -117,8 +119,10 @@ def decode_mode(console: Console) -> None:
             Panel(decrypted_message.decode(ENCODING), title='Decoded Message', style='bold green')
         )
     except Exception as e:
-        print(traceback.format_exc())
-        console.print(f'❌ [bold red]Error: {str(e)}[/bold red]')
+        logging.debug(traceback.format_exc())
+        console.print(f'❌ [bold red]Error: {e.__class__.__name__}[/bold red]')
+        if str(e):
+            console.print(f'❌ [bold red]Error detail: {e}[/bold red]')
 
 
 def main() -> None:
