@@ -10,8 +10,10 @@ pip install lesecret
 
 ## Get Started
 
-Simply start the TUI-based app with the following command:
+Start the TUI-based application with the following command:
 
 ```
 lesecret
 ```
+
+The rest is pretty self-explanatory, just play around and you will know how to use it 😆

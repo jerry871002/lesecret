@@ -34,9 +34,9 @@ def decrypt_message(encrypted_message: bytes, passkey: str) -> bytes:
     return fernet.decrypt(encrypted_message)
 
 
-def generate_output_path(path: str) -> str:
-    path = Path(path)
-    return path.with_name(f'{path.stem}-{random.randint(4096, 65535):04x}.png')
+def generate_output_path(input_path: str) -> str:
+    path = Path(input_path)
+    return str(path.with_name(f'{path.stem}-{random.randint(4096, 65535):04x}.png'))
 
 
 def encode_text_in_image(image_path: str, text: str, output_path: str) -> None:
@@ -64,7 +64,7 @@ def encode_text_in_image(image_path: str, text: str, output_path: str) -> None:
     encoded_image.save(output_path)
 
 
-def decode_text_from_image(image_path: str):
+def decode_text_from_image(image_path: str) -> str:
     image = Image.open(image_path)
     image_data = np.array(image)
 

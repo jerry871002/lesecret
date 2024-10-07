@@ -5,3 +5,11 @@ __pycache__/
 *.png
 *.jpg
 *.jpeg
+
+.coverage
+htmlcov/
+.pytest_cache/
+
+.mypy_cache
+
+.DS_store
