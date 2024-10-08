@@ -1,20 +1,26 @@
 import base64
 import logging
+import os
 import random
 import traceback
 from pathlib import Path
 
 import numpy as np
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from PIL import Image
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.text import Text
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging_level = logging.DEBUG if os.getenv('DEBUG') else logging.INFO
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging_level)
 
-END_OF_TEXT = '1111111111111110'
+# Arbitrary 4-byte-long bit sequence to mark the end of the encoded message
+# The probability of having this bit sequence in a non-encoded image is
+# 1 - ((1 - 1/2^N) ^ (W * H * 3 - N + 1))
+# For a 1000x1000 image, the probability is around 0.07%
+END_OF_TEXT = '11111111111111101111111111111110'
 ENCODING = 'utf-8'
 
 
@@ -47,8 +53,6 @@ def encode_text_in_image(image_path: str, text: str, output_path: str) -> None:
     binary_message = ''.join(format(byte, '08b') for byte in text.encode(ENCODING))
     binary_message += END_OF_TEXT
 
-    print(f'Message to encode: {binary_message=}')
-
     if len(binary_message) > image_capacity:
         raise ValueError(
             'The image is too small to hold the encoded text. Please use a larger image.'
@@ -76,6 +80,7 @@ def decode_text_from_image(image_path: str) -> str:
     binary_message = ''.join(lsb_array.astype(str))
     end_marker = binary_message.find(END_OF_TEXT)
     if end_marker != -1:
+        logging.debug(f'{end_marker=}')
         binary_message = binary_message[:end_marker]
     else:
         raise ValueError('Could not find encoded message')
@@ -112,17 +117,29 @@ def decode_mode(console: Console) -> None:
     image_path = Prompt.ask('[cyan]Enter the path to the image with hidden text[/cyan]')
     passkey = Prompt.ask('[cyan]Enter the passkey to decrypt the text[/cyan]', password=True)
 
-    try:
-        encrypted_message = decode_text_from_image(image_path)
-        decrypted_message = decrypt_message(encrypted_message.encode(ENCODING), passkey)
+    with console.status("[bold green]Working on it..."):
+        try:
+            encrypted_message = decode_text_from_image(image_path)
+        except Exception as e:
+            logging.debug(traceback.format_exc())
+            console.print(f'❌ [bold red]Error: No encoded message in the image[/bold red]')
+            return
+
+        try:
+            decrypted_message = decrypt_message(encrypted_message.encode(ENCODING), passkey)
+        except InvalidToken:
+            console.print(f'❌ [bold red]Error: Wrong passkey[/bold red]')
+            return
+        except Exception as e:
+            logging.debug(traceback.format_exc())
+            console.print(f'❌ [bold red]Error: {e.__class__.__name__}[/bold red]')
+            if str(e):
+                console.print(f'❌ [bold red]Error detail: {e}[/bold red]')
+            return
+
         console.print(
             Panel(decrypted_message.decode(ENCODING), title='Decoded Message', style='bold green')
         )
-    except Exception as e:
-        logging.debug(traceback.format_exc())
-        console.print(f'❌ [bold red]Error: {e.__class__.__name__}[/bold red]')
-        if str(e):
-            console.print(f'❌ [bold red]Error detail: {e}[/bold red]')
 
 
 def main() -> None:

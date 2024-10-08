@@ -18,17 +18,15 @@ from lesecret.main import (
 
 @pytest.fixture
 def temporary_image():
-    # Create a temporary image for testing
     temp_image = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
 
-    # Create a simple image (100x100 pixels, white)
+    # Create a random 100x100 image
     image_size = (100, 100)
-    image = Image.fromarray(np.ones(image_size + (3,), dtype=np.uint8) * 255)  # White image
+    image = Image.fromarray(np.random.randint(0, 255, image_size + (3,), dtype=np.uint8))
     image.save(temp_image.name)
 
     yield temp_image.name
 
-    # Cleanup happens here after the test is done
     temp_image.close()
 
 
