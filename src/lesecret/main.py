@@ -4,6 +4,7 @@ import os
 import random
 import traceback
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 from cryptography.fernet import Fernet, InvalidToken
@@ -42,7 +43,7 @@ def decrypt_message(encrypted_message: bytes, passkey: str) -> bytes:
 
 def generate_output_path(input_path: str) -> str:
     path = Path(input_path)
-    return str(path.with_name(f'{path.stem}-{random.randint(4096, 65535):04x}.png'))
+    return str(path.with_name(f'{path.stem}-{random.randint(0x1000, 0xffff):04x}.png'))
 
 
 def encode_text_in_image(image_path: str, text: str, output_path: str) -> None:
@@ -94,19 +95,46 @@ def decode_text_from_image(image_path: str) -> str:
     return byte_array.decode(ENCODING)
 
 
+def ask_valid_input(
+    console: Console, prompt_msg: str, validation_func: Callable[[str], bool], error_msg: str
+) -> str:
+    while True:
+        user_input = Prompt.ask(f'[green]{prompt_msg}[/green]')
+        if validation_func(user_input):
+            return user_input
+        else:
+            console.print(f'[bold red]{error_msg}[/bold red]')
+
+
+def valid_image_path(path: str) -> bool:
+    return Path(path).exists() and Path(path).suffix in ('.png', '.jpg', '.jpeg')
+
+
+def is_non_empty(text: str) -> bool:
+    return len(text) > 0
+
+
 def encode_mode(console: Console) -> None:
-    image_path = Prompt.ask('[green]Enter the path to the image to encode the text in[/green]')
-    text_to_encode = Prompt.ask('[green]Enter the text you want to encode[/green]')
+    image_path = ask_valid_input(
+        console,
+        'Enter the path to the image to encode the text in',
+        valid_image_path,
+        'Invalid image path! Make sure the file exists and is an image (.png, .jpg, .jpeg)',
+    )
+    text_to_encode = ask_valid_input(
+        console, 'Enter the text you want to encode', is_non_empty, 'Text cannot be empty!'
+    )
     passkey = Prompt.ask('[green]Enter the passkey to encrypt the text[/green]', password=True)
 
     encrypted_text = encrypt_message(text_to_encode, passkey)
 
-    output_path = generate_output_path(image_path)
     try:
+        output_path = generate_output_path(image_path)
         encode_text_in_image(image_path, encrypted_text.decode(ENCODING), output_path)
     except Exception as e:
         logging.debug(traceback.format_exc())
         console.print(f'❌ [bold red]Error: {e}[/bold red]')
+        return
 
     console.print(
         f'✅ [bold green]Text successfully encoded into the image and saved at {output_path}[/bold green]'
@@ -150,7 +178,7 @@ def main() -> None:
             Text('Hide in Plain Sight', justify='center'), title='The Secret', style='bold magenta'
         )
     )
-    mode = Prompt.ask('[cyan]Choose Mode[/cyan] (encode/decode)', choices=['encode', 'decode'])
+    mode = Prompt.ask('[cyan]Choose Mode[/cyan]', choices=['encode', 'decode'])
 
     if mode == 'encode':
         encode_mode(console)

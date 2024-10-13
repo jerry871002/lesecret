@@ -2,6 +2,8 @@
 
 This is a TUI re-implementation of my freshman year project [The Secret](https://github.com/jerry871002/OOP-Final-Project) (it was 2018 by the way...🫣), an image steganography tool to hide secrets in plain sight.
 
+Use it to secretly encode and decode messages within image files and share the images on popular messaging apps!
+
 ## Installation
 
 ```
