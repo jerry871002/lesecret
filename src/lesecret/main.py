@@ -107,7 +107,12 @@ def ask_valid_input(
 
 
 def valid_image_path(path: str) -> bool:
-    return Path(path).exists() and Path(path).suffix in ('.png', '.jpg', '.jpeg')
+    path_obj = Path(path)
+    return (
+        path_obj.exists()
+        and len(path_obj.suffixes) == 1
+        and path_obj.suffix in ('.png', '.jpg', '.jpeg')
+    )
 
 
 def is_non_empty(text: str) -> bool:

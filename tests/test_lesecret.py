@@ -1,5 +1,8 @@
 import base64
+import re
 import tempfile
+from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -13,6 +16,9 @@ from lesecret.main import (
     encode_text_in_image,
     encrypt_message,
     generate_key,
+    generate_output_path,
+    is_non_empty,
+    valid_image_path,
 )
 
 
@@ -110,3 +116,49 @@ def test_full_encode_decode_cycle(temporary_image):
     assert (
         decrypted_message.decode(ENCODING) == message
     ), 'Decoded and decrypted message should match the original'
+
+
+def test_generate_output_path():
+    input_path = 'example/test_image.png'
+    output_path = generate_output_path(input_path)
+
+    assert output_path.endswith('.png'), 'Output path should end with ".png"'
+
+    pattern = r'test_image-\w{4}.png'
+    assert re.search(pattern, Path(output_path).name), 'Output path format is incorrect'
+
+
+@patch('lesecret.main.Path.exists')
+def test_valid_image_path_valid(mock_exists):
+    mock_exists.return_value = True
+
+    assert valid_image_path('image.png') == True
+    assert valid_image_path('image.jpg') == True
+    assert valid_image_path('image.jpeg') == True
+
+
+@patch('lesecret.main.Path.exists')
+def test_valid_image_path_invalid(mock_exists):
+    mock_exists.return_value = True
+
+    # Unsupported extension
+    assert valid_image_path('image.bmp') == False
+    assert valid_image_path('image.gif') == False
+
+    # Files with no extension, weird file names
+    assert valid_image_path('image') == False
+    assert valid_image_path('image.') == False
+    assert valid_image_path('image.png.jpg') == False
+
+
+@patch('lesecret.main.Path.exists')
+def test_valid_image_path_nonexistent_file(mock_exists):
+    mock_exists.return_value = False
+
+    assert valid_image_path('nonexistent.png') == False
+
+
+def test_is_non_empty():
+    assert is_non_empty('some text') == True, 'Non-empty string should return True'
+    assert is_non_empty(' ') == True, 'String with space should return True'
+    assert is_non_empty('') == False, 'Empty string should return False'
